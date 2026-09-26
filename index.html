@@ -38,7 +38,7 @@
     height:150%;
     z-index:-1;
     pointer-events:none;
-    transform:translate(-50%,-50%);   /* random extra transform via JS */
+    transform:translate(-50%,-50%);
   }
   .smoke-img{
     position:absolute;
@@ -49,19 +49,17 @@
     background-size:contain;
     mix-blend-mode:multiply;
     opacity:0;
-    filter:blur(40px);
-    will-change:filter,opacity;
+    transform-origin:center center;
   }
   .smoke.play .smoke-img{
-    animation:diffuse 4s ease-out forwards;
+    animation:smokeIn 5s ease-out forwards;
   }
-  @keyframes diffuse{
-    0%{opacity:0;filter:blur(40px);}
-    30%{opacity:0.3;}
-    100%{opacity:0.3;filter:blur(0px);}
+  @keyframes smokeIn{
+    0%{opacity:0;filter:blur(22px);transform:scale(0.86);}
+    100%{opacity:0.3;filter:blur(0px);transform:scale(1);}
   }
   @media (prefers-reduced-motion:reduce){
-    .smoke.play .smoke-img{animation:none;opacity:0.28;filter:none;}
+    .smoke.play .smoke-img{animation:none;opacity:0.28;filter:none;transform:none;}
   }
 
   /* Header */
@@ -278,7 +276,6 @@
 <script>
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // Per-section smoke that diffuses (blur resolving) with a random shape each time
   (function(){
     function randomize(el){
       const flipX = Math.random() < 0.5 ? -1 : 1;
