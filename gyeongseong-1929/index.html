@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="1929년 경성 인쇄소·활판소 지도를 현대 서울 도심 지도와 겹쳐 비교하고, 걷는 길의 각 장소를 일제강점기 사진과 함께 소개합니다.">
+<title>1929 경성 겹쳐보기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@700;800&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* Layout: one georeferenced stage (old scan + today's street plan in the same frame), swipe control above, firm detail and walking stops below */
+:root{
+  --paper:#eceeea; --sheet:#f7f8f5; --ink:#1d2328; --muted:#5d666c; --line:#c9cdc6;
+  --kor:#2f4f86; --jpn:#b36b23; --mix:#6f7378; --none:#8f9498;
+  --road:#ffffff; --roadedge:#b9bdb5; --major:#f4d79a; --majoredge:#c9a35c;
+  --water:#7fb2d6; --park:#cfe0c6; --label:#33393e; --station:#1d2328;
+  --route:#c2402e;
+  --oldpaper:#e9e1cf; --oldink:#4a3f30; --oldfaint:#9c8f77; --oldwater:#6f8fa6;
+  --display:"Nanum Myeongjo","Noto Serif KR",serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#15191c; --sheet:#1d2226; --ink:#e7eae6; --muted:#9aa3a8; --line:#353c41;
+  --kor:#7ea4e6; --jpn:#e09a52; --mix:#a7abb0; --none:#7d8388;
+  --road:#3a4146; --roadedge:#2a3034; --major:#7a6638; --majoredge:#5c4c2a;
+  --water:#3b6f93; --park:#2b3a2a; --label:#d9ddd8; --station:#e7eae6;
+  --route:#ef6b55; --oldpaper:#2a261f; --oldink:#e2d6bd; --oldfaint:#8c8170; --oldwater:#6f93ad; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#15191c; --sheet:#1d2226; --ink:#e7eae6; --muted:#9aa3a8; --line:#353c41;
+  --kor:#7ea4e6; --jpn:#e09a52; --mix:#a7abb0; --none:#7d8388;
+  --road:#3a4146; --roadedge:#2a3034; --major:#7a6638; --majoredge:#5c4c2a;
+  --water:#3b6f93; --park:#2b3a2a; --label:#d9ddd8; --station:#e7eae6;
+  --route:#ef6b55; --oldpaper:#2a261f; --oldink:#e2d6bd; --oldfaint:#8c8170; --oldwater:#6f93ad; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+header h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,4.4vw,40px);line-height:1.2;margin:0;text-wrap:balance;letter-spacing:-.01em}
+header p{margin:6px 0 0;color:var(--muted);max-width:68ch}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-bottom:6px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;background:var(--sheet);padding:3px}
+.seg button{font:inherit;font-size:14px;border:0;background:transparent;color:var(--muted);padding:6px 14px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:focus-visible,.chk input:focus-visible,input[type=range]:focus-visible,.firm:focus-visible{outline:2px solid var(--kor);outline-offset:2px}
+.swipe{display:flex;align-items:center;gap:10px;flex:1 1 240px;min-width:0}
+.swipe label{font-size:13px;color:var(--muted);white-space:nowrap}
+.swipe input{flex:1;min-width:0;accent-color:var(--ink)}
+.chks{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px}
+.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.dot{width:11px;height:11px;border-radius:50%;display:inline-block;border:2px solid currentColor}
+.stage{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow:hidden;position:relative}
+.stage svg{display:block;width:100%;height:auto}
+.tag{position:absolute;top:10px;font-size:12px;padding:2px 9px;border-radius:999px;background:var(--ink);color:var(--paper);pointer-events:none;opacity:.88}
+.tag.l{left:10px}.tag.r{right:10px}
+.note{font-size:13px;color:var(--muted);margin:0}
+.detailgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:8px 28px;align-items:start}
+@media (max-width:760px){.detailgrid{grid-template-columns:1fr}}
+.walk{display:flex;flex-direction:column;gap:14px}
+.walkhead h2{font-family:var(--display);font-size:24px;margin:8px 0 4px;font-weight:800}
+.walkhead p{margin:0;color:var(--muted);max-width:68ch}
+.panel{background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:18px 20px;min-width:0}
+.panel h2{font-family:var(--display);font-size:20px;margin:0 0 10px;font-weight:700}
+.detail .num{font-family:var(--display);font-size:42px;line-height:1;font-weight:800}
+.detail dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:12px 0 0}
+.detail dt{color:var(--muted);font-size:13px}
+.detail dd{margin:0}
+.near{margin:8px 0 0;padding-left:18px}
+.firmlist{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.firm{font:inherit;font-size:13px;font-variant-numeric:tabular-nums;width:34px;height:30px;border-radius:4px;border:1.5px solid currentColor;background:transparent;cursor:pointer}
+.firm.k{color:var(--kor)}.firm.j{color:var(--jpn)}.firm.m{color:var(--mix)}.firm.n{color:var(--none)}
+.firm.sq{border-radius:0}
+.firm[aria-pressed="true"]{background:currentColor}
+.firm[aria-pressed="true"] span{color:var(--sheet)}
+ol.stops{margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px;align-items:start}
+ol.stops li{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow:hidden;display:flex;flex-direction:column;min-width:0}
+ol.stops li.nophoto{justify-content:flex-start}
+.stops figure{margin:0;background:#1d1f20;aspect-ratio:3/2;display:grid;place-items:center;overflow:hidden;max-width:100%}
+.stops figure img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.92)}
+.stops .txt{padding:12px 14px 14px;display:grid;grid-template-columns:28px 1fr;gap:10px}
+.stops .then{font-size:13px;color:var(--ink);margin:6px 0 0}
+.stops .cred{font-size:11.5px;color:var(--muted);margin:6px 0 0}
+.stops .cred a{color:var(--muted)}
+.stops .tm{font-variant-numeric:tabular-nums;color:var(--route);font-weight:600;font-size:12px;letter-spacing:.04em}
+.badge{width:26px;height:26px;border-radius:50%;background:var(--route);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px}
+.stops b{display:block;font-size:15.5px}
+.stops small{color:var(--muted)}
+svg text{font-family:var(--body)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="eyebrow">경성 1929 · 인쇄소와 활판소 42곳</div>
+  <h1>1929년 경성 지도와 지금의 서울 겹쳐보기</h1>
+  <p>1929년 경성의 인쇄소·활판소 위치를 현대 서울 지도 위에 옮겼습니다. 왼쪽은 당시의 지명과 기준 건물, 오른쪽은 오늘의 거리입니다. 슬라이더를 움직여 같은 자리를 비교하고, 번호를 누르면 그 업체가 지금 어디쯤인지 보여줍니다.</p>
+</header>
+
+<div class="controls">
+  <div class="seg" role="group" aria-label="보기 방식">
+    <button id="m-old" aria-pressed="false">옛 지도</button>
+    <button id="m-swipe" aria-pressed="true">나란히 비교</button>
+    <button id="m-new" aria-pressed="false">오늘 지도</button>
+  </div>
+  <div class="swipe" id="swipebox">
+    <label for="sw">옛 지도 ← → 오늘</label>
+    <input id="sw" type="range" min="0" max="1001" value="520">
+  </div>
+</div>
+<div class="chks" aria-label="표시할 업체">
+  <label class="chk" style="color:var(--kor)"><input id="f-k" type="checkbox" checked><span class="dot"></span><span style="color:var(--ink)">한국인 소유</span></label>
+  <label class="chk" style="color:var(--jpn)"><input id="f-j" type="checkbox" checked><span class="dot"></span><span style="color:var(--ink)">일본인 소유</span></label>
+  <label class="chk" style="color:var(--mix)"><input id="f-m" type="checkbox" checked><span class="dot"></span><span style="color:var(--ink)">변경·혼합 / 기록 없음</span></label>
+  <label class="chk" style="color:var(--route)"><input id="f-r" type="checkbox" checked><span class="dot"></span><span style="color:var(--ink)">내일 걷는 길</span></label>
+</div>
+
+<div class="stage">
+  <svg id="map" viewBox="0 0 1001 691" role="img" aria-label="1929년 경성 지도와 현대 서울 도심 지도 비교">
+    <defs><clipPath id="clipNew"><rect id="clipRect" x="520" y="0" width="481" height="691"/></clipPath></defs>
+    <g id="oldlayer"></g>
+    <g id="newlayer" clip-path="url(#clipNew)"></g>
+    <line id="divider" x1="520" y1="0" x2="520" y2="691" stroke="var(--ink)" stroke-width="2"/>
+    <g id="routelayer"></g>
+    <g id="firmlayer"></g>
+  </svg>
+  <span class="tag l" id="tagL">1929</span><span class="tag r" id="tagR">오늘</span>
+</div>
+<p class="note">업체 위치와 소유 구분은 1929년 경성 인쇄업 지도에서 옮긴 것으로, 원 지도의 축척과 기준 건물(경성부청·숭례문·총독부)로 계산한 근사치라 100~200m 정도 어긋날 수 있습니다. 1929년 쪽 그림은 당시 지명과 주요 건물만 다시 그린 개략도입니다. 범위 밖 번호(14, 44~46)는 생략했습니다.</p>
+
+<section class="panel detail" aria-live="polite">
+  <h2>업체 위치</h2>
+  <div class="detailgrid"><div id="detail"></div><div class="firmlist" id="firmlist"></div></div>
+</section>
+<section class="walk">
+  <div class="walkhead">
+    <h2>내일 걷는 길</h2>
+    <p>시청역에서 출발해 청계천을 건너 남촌을 돌고, 충무로역에서 인쇄골목을 따라 올라가 저녁까지. 걷는 거리 약 4km.</p>
+  </div>
+  <ol class="stops" id="stops"></ol>
+  <p class="note">옛 사진은 모두 위키미디어 공용에 퍼블릭 도메인으로 올라 있는 자료입니다. 사진 아래 출처를 누르면 원본 페이지가 열립니다.</p>
+</section>
+</div>
+
+<script>
+const PH={"cityhall": "images/cityhall.jpg", "gwangtong": "images/gwangtong.jpg", "chosenbank": "images/chosenbank.jpg", "savings": "images/savings.jpg", "honmachi": "images/honmachi.jpg", "kogane": "images/kogane.jpg"};
+const P0={x:314,y:475,lat:37.5663,lng:126.9779}, DLAT=3.063e-5, DLNG=3.854e-5;
+const proj=(lat,lng)=>[P0.x+(lng-P0.lng)/DLNG, P0.y-(lat-P0.lat)/DLAT];
+const unproj=(x,y)=>[P0.lat-(y-P0.y)*DLAT, P0.lng+(x-P0.x)*DLNG];
+const NS='http://www.w3.org/2000/svg';
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e};
+const pts=a=>a.map(([la,ln])=>proj(la,ln).map(v=>v.toFixed(1)).join(',')).join(' ');
+
+// today's streets (approximate centerlines)
+const majors={
+ '세종대로':[[37.5762,126.9769],[37.5705,126.9768],[37.5668,126.9773],[37.5650,126.9770],[37.5625,126.9762],[37.5600,126.9752],[37.5580,126.9738]],
+ '종로':[[37.5705,126.9768],[37.5701,126.9825],[37.5704,126.9870],[37.5711,126.9920],[37.5712,126.9990],[37.5713,127.0060]],
+ '을지로':[[37.5662,126.9783],[37.5660,126.9826],[37.5661,126.9880],[37.5663,126.9915],[37.5666,126.9980],[37.5667,127.0060]],
+ '남대문로':[[37.5600,126.9752],[37.5603,126.9768],[37.5617,126.9800],[37.5640,126.9815],[37.5660,126.9826],[37.5686,126.9836],[37.5701,126.9830]],
+ '퇴계로':[[37.5585,126.9775],[37.5590,126.9790],[37.5600,126.9822],[37.5609,126.9863],[37.5612,126.9940],[37.5622,127.0000],[37.5650,127.0060]],
+ '삼일대로':[[37.5800,126.9850],[37.5760,126.9853],[37.5705,126.9878],[37.5664,126.9876],[37.5609,126.9862],[37.5585,126.9858]],
+ '율곡로':[[37.5758,126.9769],[37.5760,126.9853],[37.5755,126.9950],[37.5748,127.0060]],
+ '새문안로':[[37.5705,126.9768],[37.5700,126.9700],[37.5690,126.9650]],
+};
+const minors=[
+ [[37.5652,126.9780],[37.5640,126.9792],[37.5625,126.9806]],               // 소공로
+ [[37.5650,126.9770],[37.5625,126.9700],[37.5610,126.9650]],               // 서소문로
+ [[37.5800,126.9910],[37.5711,126.9918],[37.5663,126.9915],[37.5612,126.9945]], // 돈화문로·충무로
+ [[37.5745,126.9800],[37.5705,126.9805]],                                  // 우정국로
+ [[37.5640,126.9815],[37.5640,126.9900],[37.5640,126.9990]],               // 명동·충무로 골목축
+ [[37.5685,126.9735],[37.5662,126.9700]],                                   // 정동길
+ [[37.5711,126.9960],[37.5612,126.9965]],                                   // 세운상가 축
+];
+const water=[[37.5694,126.9780],[37.5688,126.9830],[37.5686,126.9870],[37.5688,126.9920],[37.5690,126.9970],[37.5695,127.0060]];
+const parks=[
+ {n:'경복궁',p:[[37.5810,126.9740],[37.5810,126.9800],[37.5762,126.9800],[37.5762,126.9740]]},
+ {n:'덕수궁',p:[[37.5672,126.9737],[37.5675,126.9762],[37.5650,126.9765],[37.5648,126.9740]]},
+ {n:'서울광장',p:[[37.5664,126.9772],[37.5664,126.9782],[37.5653,126.9782],[37.5653,126.9772]]},
+ {n:'탑골공원',p:[[37.5716,126.9875],[37.5716,126.9890],[37.5706,126.9890],[37.5706,126.9875]]},
+];
+const stations=[['시청',37.5657,126.9769],['광화문',37.5710,126.9768],['종각',37.5702,126.9831],['종로3가',37.5711,126.9918],['종로5가',37.5709,127.0019],['을지로입구',37.5660,126.9826],['을지로3가',37.5663,126.9915],['을지로4가',37.5667,126.9980],['명동',37.5609,126.9863],['회현',37.5588,126.9785],['충무로',37.5612,126.9945],['안국',37.5763,126.9855]];
+
+function drawOld(){
+  const g=document.getElementById('oldlayer');
+  el('rect',{x:0,y:0,width:1001,height:691,fill:'var(--oldpaper)'},g);
+  for(let x=0;x<=1001;x+=50)el('line',{x1:x,y1:0,x2:x,y2:691,stroke:'var(--oldfaint)','stroke-width':.4,opacity:.35},g);
+  for(let y=0;y<=691;y+=50)el('line',{x1:0,y1:y,x2:1001,y2:y,stroke:'var(--oldfaint)','stroke-width':.4,opacity:.35},g);
+  const roads=[majors['세종대로'],majors['종로'],majors['을지로'],majors['남대문로'],[[37.5652,126.9780],[37.5640,126.9792],[37.5625,126.9806]],[[37.5617,126.9800],[37.5625,126.9850],[37.5630,126.9940],[37.5635,127.0040]]];
+  for(const r of roads)el('polyline',{points:pts(r),fill:'none',stroke:'var(--oldfaint)','stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round',opacity:.8},g);
+  el('polyline',{points:pts(water),fill:'none',stroke:'var(--oldwater)','stroke-width':4,'stroke-linecap':'round'},g);
+  const L=(txt,la,ln,o={})=>{const [x,y]=proj(la,ln);const t=el('text',{x,y,'font-size':o.s||13,fill:o.c||'var(--oldink)','font-weight':o.w||500,'text-anchor':o.a||'middle','font-style':o.i?'italic':'normal','letter-spacing':o.ls||0,transform:o.r?`rotate(${o.r} ${x} ${y})`:''},g);t.textContent=txt;return t};
+  const lm=[['總督府',37.5770,126.9770],['府廳',37.5663,126.9779],['朝鮮銀行',37.5621,126.9806],['南大門',37.5600,126.9752]];
+  for(const [n,la,ln] of lm){const [x,y]=proj(la,ln);el('path',{d:`M${x} ${y-6}L${x+6} ${y+5}L${x-6} ${y+5}Z`,fill:'var(--oldink)'},g);L(n,la,ln,{s:13,w:700,a:'start'}).setAttribute('transform',`translate(10 4)`)}
+  L('鍾路',37.5718,126.9930,{s:15,w:700,ls:4});
+  L('清溪川',37.5683,126.9905,{s:13,c:'var(--oldwater)',w:700,ls:3});
+  L('黃金町',37.5672,126.9965,{s:14,w:700,ls:3});
+  L('本町',37.5612,126.9860,{s:14,w:700,ls:3});
+  L('長谷川町',37.5648,126.9815,{s:12,ls:2});
+  L('太平通',37.5612,126.9745,{s:12,ls:2,r:-62});
+  L('北村 · 한국인 거주지',37.5745,126.9700,{s:13,i:1,c:'var(--kor)',w:600});
+  L('南村 · 일본인 거주지',37.5598,126.9690,{s:13,i:1,c:'var(--jpn)',w:600});
+  const [sx,sy]=proj(37.5585,126.9950);
+  el('line',{x1:sx,y1:sy,x2:sx+500/(DLNG*88210),y2:sy,stroke:'var(--oldink)','stroke-width':2},g);
+  const st=el('text',{x:sx,y:sy-6,'font-size':11,fill:'var(--oldink)'},g);st.textContent='0        500 m';
+}
+function drawNew(){
+  const g=document.getElementById('newlayer');
+  el('rect',{x:0,y:0,width:1001,height:691,fill:'var(--sheet)'},g);
+  for(const p of parks){el('polygon',{points:pts(p.p),fill:'var(--park)'},g);}
+  for(const m of minors){el('polyline',{points:pts(m),fill:'none',stroke:'var(--roadedge)','stroke-width':7,'stroke-linecap':'round','stroke-linejoin':'round'},g);}
+  for(const m of minors){el('polyline',{points:pts(m),fill:'none',stroke:'var(--road)','stroke-width':5,'stroke-linecap':'round','stroke-linejoin':'round'},g);}
+  el('polyline',{points:pts(water),fill:'none',stroke:'var(--water)','stroke-width':6,'stroke-linecap':'round'},g);
+  for(const k in majors){el('polyline',{points:pts(majors[k]),fill:'none',stroke:'var(--majoredge)','stroke-width':12,'stroke-linecap':'round','stroke-linejoin':'round'},g);}
+  for(const k in majors){el('polyline',{points:pts(majors[k]),fill:'none',stroke:'var(--major)','stroke-width':9,'stroke-linecap':'round','stroke-linejoin':'round'},g);}
+  const lab=(txt,la,ln,o={})=>{const [x,y]=proj(la,ln);const t=el('text',{x,y,'font-size':o.s||13,fill:o.c||'var(--label)','font-weight':o.w||500,'text-anchor':o.a||'middle',transform:o.r?`rotate(${o.r} ${x} ${y})`:''},g);t.textContent=txt;return t};
+  lab('세종대로',37.5735,126.9764,{r:-90,s:12});
+  lab('종로',37.5715,126.9960,{s:13});
+  lab('을지로',37.5671,126.9950,{s:13});
+  lab('남대문로',37.5628,126.9817,{r:-58,s:11});
+  lab('퇴계로',37.5602,126.9905,{s:12});
+  lab('삼일대로',37.5735,126.9873,{r:-70,s:11});
+  lab('청계천',37.5681,126.9905,{c:'var(--water)',s:12,w:600});
+  for(const p of parks){const c=p.p.reduce((a,b)=>[a[0]+b[0]/p.p.length,a[1]+b[1]/p.p.length],[0,0]);lab(p.n,c[0],c[1],{s:11,c:'var(--muted)'})}
+  for(const [n,la,ln] of stations){const [x,y]=proj(la,ln);
+    el('rect',{x:x-5,y:y-5,width:10,height:10,rx:2,fill:'var(--sheet)',stroke:'var(--station)','stroke-width':2},g);
+    const t=el('text',{x:x+8,y:y-7,'font-size':11,fill:'var(--station)','font-weight':600},g);t.textContent=n+'역';}
+}
+
+const firms=[
+ [1,167,378,'k','o'],[2,405,178,'m','o'],[3,435,52,'k','o'],[4,439,202,'k','o'],[5,466,318,'k','o'],[6,546,404,'n','s'],[7,476,359,'k','o'],[8,514,212,'n','o'],[9,546,327,'k','o'],[10,615,306,'k','o'],[11,718,376,'k','o'],[12,838,348,'k','o'],[13,839,371,'k','o'],
+ [15,31,644,'n','o'],[16,236,575,'j','o'],[17,260,537,'j','o'],[18,265,516,'j','o'],[19,267,608,'k','o'],[20,281,542,'j','o'],[21,301,431,'j','s'],[22,379,550,'n','o'],[23,379,570,'j','o'],[24,335,511,'n','s'],[25,325,529,'j','o'],[26,403,481,'j','o'],[27,413,568,'j','s'],[28,430,637,'j','o'],[29,436,665,'j','o'],[30,468,443,'k','o'],[31,447,438,'k','o'],[32,466,550,'j','o'],[33,466,675,'j','o'],[34,493,486,'k','o'],[35,499,465,'k','s'],[36,520,425,'k','o'],[37,519,558,'j','s'],[38,559,505,'k','o'],[39,633,607,'j','o'],[40,680,469,'k','s'],[41,692,451,'j','s'],[42,720,470,'m','o'],[43,842,628,'j','o']
+];
+const OWN={k:'한국인',j:'일본인',m:'변경 또는 혼합',n:'기록 없음'};
+const COL={k:'var(--kor)',j:'var(--jpn)',m:'var(--mix)',n:'var(--none)'};
+const anchors=[...stations.map(([n,la,ln])=>[n+'역',la,ln]),
+ ['서울도서관(옛 경성부청)',37.5663,126.9779],['한국은행 화폐박물관',37.5621,126.9806],['신세계 더 헤리티지',37.5610,126.9805],['광통관(광교)',37.5677,126.9831],['일민미술관(옛 동아일보 사옥)',37.5698,126.9777],['숭례문',37.5600,126.9752],
+ ['보신각',37.5700,126.9837],['탑골공원',37.5711,126.9882],['조계사',37.5740,126.9817],['인사동길 입구',37.5735,126.9856],['명동성당',37.5633,126.9871],['명동예술극장',37.5642,126.9839],['롯데호텔 서울',37.5652,126.9810],['세운상가',37.5680,126.9950],['덕수궁 대한문',37.5658,126.9766],['서울역사박물관',37.5704,126.9700],['정동제일교회',37.5664,126.9733],['남대문시장',37.5592,126.9776],['청계광장',37.5694,126.9780],['광화문광장',37.5733,126.9769],['조선일보 옛 사옥(태평로)',37.5679,126.9767],['을지로 인쇄골목',37.5664,126.9935],['아게루',37.5654,126.9920],['서울중앙우체국',37.5625,126.9825]];
+const dist=(a,b,c,d)=>Math.hypot((a-c)*111000,(b-d)*88210);
+
+const C='https://commons.wikimedia.org/wiki/File:';
+const stops=[
+ {n:'서울도서관',s:'옛 경성부청 · 지도 속 府廳',tm:'12:30',la:37.5663,ln:126.9778,img:'cityhall',
+  then:'1926년 준공한 경성부청을 담은 그림엽서. 정면과 돔, 중앙홀이 지금도 원형대로 남아 있어 사진과 같은 각도로 서 보기 좋습니다.',cred:'경성부청 그림엽서, 1926년 이후 (서울역사박물관 소장)',href:C+'%EA%B2%BD%EC%84%B1%EB%B6%80%EC%B2%AD_%EC%A0%84%EA%B2%BD.jpg'},
+ {via:[37.5694,126.9780]},
+ {n:'광통관',s:'청계천 광교 옆 · 6·36번 근처',tm:'13:15',la:37.5677,ln:126.9831,img:'gwangtong',
+  then:'광통관 앞을 지나는 전차. 1909년 지은 은행 건물로, 이 일대가 지도에서 남촌과 북촌이 갈리는 경계입니다.',cred:'Bank and trolley car, Seoul, 1908~1922년 (테일러 선교사 컬렉션)',href:C+'Bank_and_trolley_car,_Seoul,_(s.d.)_(Taylor_box45num04).jpg'},
+ {n:'한국은행 화폐박물관',s:'옛 조선은행 · 22·23·27번 근처',tm:'13:40',la:37.5621,ln:126.9806,img:'chosenbank',
+  then:'조선명소 그림엽서 속 조선은행. 앞쪽 빈터가 뒤에 선은전 광장과 분수대가 되는 자리입니다.',cred:'(27) 京城朝鮮銀行, 조선명소 그림엽서 (교토대학 소장)',href:C+'(27)%E4%BA%AC%E5%9F%8E%E6%9C%9D%E9%AE%AE%E9%8A%80%E8%A1%8C(%E6%9C%9D%E9%AE%AE%E5%90%8D%E6%89%80).jpg'},
+ {n:'신세계 더 헤리티지',s:'옛 조선저축은행 (1935)',tm:'14:40',la:37.5610,ln:126.9805,img:'savings',
+  then:'왼쪽이 미쓰코시 경성점(지금 신세계 본관), 오른쪽 기둥 늘어선 건물이 조선저축은행입니다. 두 건물이 그대로 나란히 서 있습니다.',cred:'미쓰코시 경성점과 조선저축은행, 1935년 이후 (『일제침략하의 서울』 수록)',href:C+'Mitsukoshi_Department_Store_Keijo_Branch_and_Chosen_Savings_Bank.JPG'},
+ {n:'충무로역',s:'명동을 지나 도착 · 옛 지도 39번 근처',tm:'15:30',la:37.5612,ln:126.9945,img:'honmachi',
+  then:'1930년대 本町(혼마치) 1정목 입구. 지금의 충무로로, 사진의 아치는 신세계 쪽 서쪽 끝이고 충무로역은 같은 길의 동쪽입니다.',cred:'First street of Honmachi, Keijo, 1930년대',href:C+'First_Street_of_Honmachi_Keijo_Korea_1930s.png'},
+ {n:'인현동 인쇄골목',s:'충무로에서 북쪽으로 골목 산책',tm:'15:40',la:37.5636,ln:126.9935},
+ {n:'을지로 인쇄골목',s:'지도 속 黃金町 · 40·41·42번 주조소 자리',tm:'16:00',la:37.5664,ln:126.9935,img:'kogane',
+  then:'전차가 다니던 황금정 거리, 지금의 을지로입니다. 같은 길가에 지금도 인쇄소와 제본소가 이어집니다.',cred:'黄金町(황금정), 『朝鮮の都市 京城と仁川』 수록',href:C+'Kogane-Cho_in_Keijo.JPG'},
+ {n:'아게루',s:'저녁 · 일요일 오후 4시 오픈',tm:'16:10',la:37.5654,ln:126.9920}
+];
+const realStops=stops.filter(s=>s.n);
+
+let sel=null;
+function drawFirms(){
+  const g=document.getElementById('firmlayer');g.innerHTML='';
+  const show={k:fk.checked,j:fj.checked,m:fm.checked,n:fm.checked};
+  for(const [n,x,y,o,s] of firms){ if(!show[o])continue;
+    const a=el('g',{tabindex:0,role:'button','aria-label':`${n}번 업체`,style:'cursor:pointer'},g);
+    const r=n===sel?13:10;
+    if(s==='s') el('rect',{x:x-r,y:y-r,width:r*2,height:r*2,fill:o==='n'?'var(--sheet)':COL[o],stroke:o==='n'?'var(--none)':COL[o],'stroke-width':2},a);
+    else el('circle',{cx:x,cy:y,r,fill:o==='j'||o==='n'?'var(--sheet)':COL[o],stroke:COL[o],'stroke-width':o==='j'?3:2},a);
+    if(n===sel) el('circle',{cx:x,cy:y,r:r+6,fill:'none',stroke:'var(--ink)','stroke-width':2},a);
+    const filled=(o==='k'||o==='m')||(s==='s'&&o!=='n');
+    const t=el('text',{x,y:y+4,'text-anchor':'middle','font-size':11,'font-weight':600,fill:filled?'var(--sheet)':COL[o]},a);
+    t.textContent=n;
+    a.addEventListener('click',()=>pick(n));
+    a.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(n)}});
+  }
+}
+function drawRoute(){
+  const g=document.getElementById('routelayer');g.innerHTML='';
+  if(!fr.checked)return;
+  el('polyline',{points:pts(stops.map(s=>s.via||[s.la,s.ln])),fill:'none',stroke:'var(--route)','stroke-width':3,'stroke-dasharray':'7 6','stroke-linecap':'round',opacity:.9},g);
+  realStops.forEach((s,i)=>{const [x,y]=proj(s.la,s.ln);
+    el('circle',{cx:x,cy:y,r:9,fill:'var(--route)',stroke:'var(--sheet)','stroke-width':2},g);
+    const t=el('text',{x,y:y+4,'text-anchor':'middle','font-size':11,'font-weight':700,fill:'#fff'},g);t.textContent=String.fromCharCode(65+i);});
+}
+function pick(n){
+  sel=n;const f=firms.find(f=>f[0]===n);const [,x,y,o,s]=f;const [la,ln]=unproj(x,y);
+  const near=anchors.map(a=>[a[0],dist(la,ln,a[1],a[2])]).sort((a,b)=>a[1]-b[1]).slice(0,3);
+  document.getElementById('detail').innerHTML=`<div class="num" style="color:${COL[o]}">${n}</div>
+   <dl><dt>소유</dt><dd>${OWN[o]}</dd><dt>업종</dt><dd>${s==='s'?'활자 주조(파운드리)급':'인쇄소 및 기타'}</dd>
+   <dt>지금 좌표</dt><dd style="font-variant-numeric:tabular-nums">${la.toFixed(4)}, ${ln.toFixed(4)}</dd></dl>
+   <p style="margin:12px 0 0;color:var(--muted);font-size:13px">지금 기준으로 가까운 곳</p>
+   <ul class="near">${near.map(([nm,d])=>`<li>${nm} <span style="color:var(--muted)">약 ${Math.round(d/10)*10}m</span></li>`).join('')}</ul>`;
+  document.querySelectorAll('.firm').forEach(b=>b.setAttribute('aria-pressed',b.dataset.n==n));
+  drawFirms();
+}
+function buildList(){
+  const box=document.getElementById('firmlist');
+  for(const [n,,,o,s] of firms){const b=document.createElement('button');b.className=`firm ${o}${s==='s'?' sq':''}`;b.dataset.n=n;b.setAttribute('aria-pressed','false');b.setAttribute('aria-label',`${n}번 업체`);b.innerHTML=`<span>${n}</span>`;b.onclick=()=>pick(n);box.appendChild(b)}
+  const ol=document.getElementById('stops');
+  realStops.forEach((s,i)=>{const li=document.createElement('li');if(!s.img)li.className='nophoto';
+    li.innerHTML=(s.img?`<figure><img src="${PH[s.img]}" alt="${s.n} 자리의 일제강점기 사진" loading="lazy"></figure>`:'')+
+    `<div class="txt"><span class="badge">${String.fromCharCode(65+i)}</span><div><span class="tm">${s.tm}</span><b>${s.n}</b><small>${s.s}</small>`+
+    (s.then?`<p class="then">${s.then}</p><p class="cred"><a href="${s.href}" target="_blank" rel="noopener">${s.cred}</a> · 퍼블릭 도메인</p>`:'')+`</div></div>`;
+    ol.appendChild(li)});
+}
+
+const sw=document.getElementById('sw'),clip=document.getElementById('clipRect'),div=document.getElementById('divider');
+const fk=document.getElementById('f-k'),fj=document.getElementById('f-j'),fm=document.getElementById('f-m'),fr=document.getElementById('f-r');
+let mode='swipe';
+function setSwipe(v){clip.setAttribute('x',v);clip.setAttribute('width',1001-v);div.setAttribute('x1',v);div.setAttribute('x2',v)}
+function setMode(m){mode=m;
+  for(const k of ['old','swipe','new'])document.getElementById('m-'+k).setAttribute('aria-pressed',k===m);
+  document.getElementById('swipebox').hidden=m!=='swipe';
+  div.style.display=m==='swipe'?'':'none';
+  document.getElementById('tagL').textContent=m==='new'?'오늘':'1929';
+  document.getElementById('tagR').textContent=m==='old'?'1929':'오늘';
+  setSwipe(m==='old'?1001:m==='new'?0:+sw.value);
+  try{localStorage.setItem('mode',m)}catch(e){}
+}
+sw.addEventListener('input',()=>setSwipe(+sw.value));
+for(const k of ['old','swipe','new'])document.getElementById('m-'+k).onclick=()=>setMode(k);
+[fk,fj,fm].forEach(c=>c.onchange=drawFirms);fr.onchange=drawRoute;
+
+drawOld();drawNew();buildList();drawRoute();pick(27);
+let m0='swipe';try{m0=localStorage.getItem('mode')||'swipe'}catch(e){}
+setMode(m0);
+</script>
+</body>
+</html>
