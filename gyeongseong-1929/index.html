@@ -15,6 +15,7 @@
   --road:#ffffff; --roadedge:#b9bdb5; --major:#f4d79a; --majoredge:#c9a35c;
   --water:#7fb2d6; --park:#cfe0c6; --label:#33393e; --station:#1d2328;
   --route:#c2402e;
+  --oldpaper:#e9e1cf; --oldink:#4a3f30; --oldfaint:#9c8f77; --oldwater:#6f8fa6;
   --display:"Nanum Myeongjo","Noto Serif KR",serif;
   --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
 }
@@ -23,13 +24,13 @@
   --kor:#7ea4e6; --jpn:#e09a52; --mix:#a7abb0; --none:#7d8388;
   --road:#3a4146; --roadedge:#2a3034; --major:#7a6638; --majoredge:#5c4c2a;
   --water:#3b6f93; --park:#2b3a2a; --label:#d9ddd8; --station:#e7eae6;
-  --route:#ef6b55; color-scheme:dark}}
+  --route:#ef6b55; --oldpaper:#2a261f; --oldink:#e2d6bd; --oldfaint:#8c8170; --oldwater:#6f93ad; color-scheme:dark}}
 :root[data-theme="dark"]{
   --paper:#15191c; --sheet:#1d2226; --ink:#e7eae6; --muted:#9aa3a8; --line:#353c41;
   --kor:#7ea4e6; --jpn:#e09a52; --mix:#a7abb0; --none:#7d8388;
   --road:#3a4146; --roadedge:#2a3034; --major:#7a6638; --majoredge:#5c4c2a;
   --water:#3b6f93; --park:#2b3a2a; --label:#d9ddd8; --station:#e7eae6;
-  --route:#ef6b55; color-scheme:dark}
+  --route:#ef6b55; --oldpaper:#2a261f; --oldink:#e2d6bd; --oldfaint:#8c8170; --oldwater:#6f93ad; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 48px}
@@ -94,7 +95,7 @@ svg text{font-family:var(--body)}
 <header>
   <div class="eyebrow">경성 1929 · 인쇄소와 활판소 42곳</div>
   <h1>1929년 경성 지도와 지금의 서울 겹쳐보기</h1>
-  <p>논문 지도의 축척(500m)과 경성부청·숭례문·총독부 위치를 기준으로 옛 지도를 현대 좌표에 맞췄습니다. 슬라이더를 움직여 같은 자리의 옛날과 지금을 비교하고, 번호를 누르면 그 업체가 지금 어디쯤인지 보여줍니다.</p>
+  <p>1929년 경성의 인쇄소·활판소 위치를 현대 서울 지도 위에 옮겼습니다. 왼쪽은 당시의 지명과 기준 건물, 오른쪽은 오늘의 거리입니다. 슬라이더를 움직여 같은 자리를 비교하고, 번호를 누르면 그 업체가 지금 어디쯤인지 보여줍니다.</p>
 </header>
 
 <div class="controls">
@@ -118,7 +119,7 @@ svg text{font-family:var(--body)}
 <div class="stage">
   <svg id="map" viewBox="0 0 1001 691" role="img" aria-label="1929년 경성 지도와 현대 서울 도심 지도 비교">
     <defs><clipPath id="clipNew"><rect id="clipRect" x="520" y="0" width="481" height="691"/></clipPath></defs>
-    <image id="oldimg" href="images/map-1929.jpg" x="0" y="0" width="1001" height="691" preserveAspectRatio="none"/>
+    <g id="oldlayer"></g>
     <g id="newlayer" clip-path="url(#clipNew)"></g>
     <line id="divider" x1="520" y1="0" x2="520" y2="691" stroke="var(--ink)" stroke-width="2"/>
     <g id="routelayer"></g>
@@ -126,7 +127,7 @@ svg text{font-family:var(--body)}
   </svg>
   <span class="tag l" id="tagL">1929</span><span class="tag r" id="tagR">오늘</span>
 </div>
-<p class="note">위치는 옛 지도의 축척과 기준점으로 계산한 근사치라 100~200m 정도 어긋날 수 있습니다. 조선은행 표시는 실제 화폐박물관보다 약 200m 북쪽에 찍혀 있어 기준점에서 뺐습니다. 지도 밖 번호(14, 44~46)는 생략했습니다.</p>
+<p class="note">업체 위치와 소유 구분은 1929년 경성 인쇄업 지도에서 옮긴 것으로, 원 지도의 축척과 기준 건물(경성부청·숭례문·총독부)로 계산한 근사치라 100~200m 정도 어긋날 수 있습니다. 1929년 쪽 그림은 당시 지명과 주요 건물만 다시 그린 개략도입니다. 범위 밖 번호(14, 44~46)는 생략했습니다.</p>
 
 <section class="panel detail" aria-live="polite">
   <h2>업체 위치</h2>
@@ -180,6 +181,29 @@ const parks=[
 ];
 const stations=[['시청',37.5657,126.9769],['광화문',37.5710,126.9768],['종각',37.5702,126.9831],['종로3가',37.5711,126.9918],['종로5가',37.5709,127.0019],['을지로입구',37.5660,126.9826],['을지로3가',37.5663,126.9915],['을지로4가',37.5667,126.9980],['명동',37.5609,126.9863],['회현',37.5588,126.9785],['충무로',37.5612,126.9945],['안국',37.5763,126.9855]];
 
+function drawOld(){
+  const g=document.getElementById('oldlayer');
+  el('rect',{x:0,y:0,width:1001,height:691,fill:'var(--oldpaper)'},g);
+  for(let x=0;x<=1001;x+=50)el('line',{x1:x,y1:0,x2:x,y2:691,stroke:'var(--oldfaint)','stroke-width':.4,opacity:.35},g);
+  for(let y=0;y<=691;y+=50)el('line',{x1:0,y1:y,x2:1001,y2:y,stroke:'var(--oldfaint)','stroke-width':.4,opacity:.35},g);
+  const roads=[majors['세종대로'],majors['종로'],majors['을지로'],majors['남대문로'],[[37.5652,126.9780],[37.5640,126.9792],[37.5625,126.9806]],[[37.5617,126.9800],[37.5625,126.9850],[37.5630,126.9940],[37.5635,127.0040]]];
+  for(const r of roads)el('polyline',{points:pts(r),fill:'none',stroke:'var(--oldfaint)','stroke-width':3,'stroke-linecap':'round','stroke-linejoin':'round',opacity:.8},g);
+  el('polyline',{points:pts(water),fill:'none',stroke:'var(--oldwater)','stroke-width':4,'stroke-linecap':'round'},g);
+  const L=(txt,la,ln,o={})=>{const [x,y]=proj(la,ln);const t=el('text',{x,y,'font-size':o.s||13,fill:o.c||'var(--oldink)','font-weight':o.w||500,'text-anchor':o.a||'middle','font-style':o.i?'italic':'normal','letter-spacing':o.ls||0,transform:o.r?`rotate(${o.r} ${x} ${y})`:''},g);t.textContent=txt;return t};
+  const lm=[['總督府',37.5770,126.9770],['府廳',37.5663,126.9779],['朝鮮銀行',37.5621,126.9806],['南大門',37.5600,126.9752]];
+  for(const [n,la,ln] of lm){const [x,y]=proj(la,ln);el('path',{d:`M${x} ${y-6}L${x+6} ${y+5}L${x-6} ${y+5}Z`,fill:'var(--oldink)'},g);L(n,la,ln,{s:13,w:700,a:'start'}).setAttribute('transform',`translate(10 4)`)}
+  L('鍾路',37.5718,126.9930,{s:15,w:700,ls:4});
+  L('清溪川',37.5683,126.9905,{s:13,c:'var(--oldwater)',w:700,ls:3});
+  L('黃金町',37.5672,126.9965,{s:14,w:700,ls:3});
+  L('本町',37.5612,126.9860,{s:14,w:700,ls:3});
+  L('長谷川町',37.5648,126.9815,{s:12,ls:2});
+  L('太平通',37.5612,126.9745,{s:12,ls:2,r:-62});
+  L('北村 · 한국인 거주지',37.5745,126.9700,{s:13,i:1,c:'var(--kor)',w:600});
+  L('南村 · 일본인 거주지',37.5598,126.9690,{s:13,i:1,c:'var(--jpn)',w:600});
+  const [sx,sy]=proj(37.5585,126.9950);
+  el('line',{x1:sx,y1:sy,x2:sx+500/(DLNG*88210),y2:sy,stroke:'var(--oldink)','stroke-width':2},g);
+  const st=el('text',{x:sx,y:sy-6,'font-size':11,fill:'var(--oldink)'},g);st.textContent='0        500 m';
+}
 function drawNew(){
   const g=document.getElementById('newlayer');
   el('rect',{x:0,y:0,width:1001,height:691,fill:'var(--sheet)'},g);
@@ -298,7 +322,7 @@ sw.addEventListener('input',()=>setSwipe(+sw.value));
 for(const k of ['old','swipe','new'])document.getElementById('m-'+k).onclick=()=>setMode(k);
 [fk,fj,fm].forEach(c=>c.onchange=drawFirms);fr.onchange=drawRoute;
 
-drawNew();buildList();drawRoute();pick(27);
+drawOld();drawNew();buildList();drawRoute();pick(27);
 let m0='swipe';try{m0=localStorage.getItem('mode')||'swipe'}catch(e){}
 setMode(m0);
 </script>

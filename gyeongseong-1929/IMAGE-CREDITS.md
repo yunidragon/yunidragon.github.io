@@ -9,4 +9,3 @@
 - images/honmachi.jpg — First Street of Honmachi, Keijo, 1930s: https://commons.wikimedia.org/wiki/File:First_Street_of_Honmachi_Keijo_Korea_1930s.png
 - images/kogane.jpg — 黄金町, 『朝鮮の都市 京城と仁川』: https://commons.wikimedia.org/wiki/File:Kogane-Cho_in_Keijo.JPG
 
-images/map-1929.jpg 는 사용자가 제공한 논문 지도(Gyeongseong 1929) 캡처입니다. 공개 웹사이트에 올리기 전에 원 논문의 이용 조건을 확인하세요.
